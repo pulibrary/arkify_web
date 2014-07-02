@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+
+  <div class="row">
+    <div class="col-md-2"></div>
+    <header class="col-md-8">
+      <h1>{{ title }}</h1>
+    </header>
+    <div class="col-md-2"></div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-2"></div>
+    <div class="col-md-8">
+      {% if message %}
+      <div class="alert alert-{{ alert_type }} alert-dismissible" role="alert">
+        <!-- <button type="button" class="close" data-dismiss="alert"> -->
+        <a href="{{ here }}" type="button" class="close" data-dismiss="alert">
+          <span aria-hidden="true">&times;</span>
+          <span class="sr-only">Close</span>
+        </a>
+        <!-- </button> -->
+        <p>{{ message }}</p>
+        {% if ark %}
+        <p>
+          <a href="{{ ark }}" class="alert-link">{{ ark }}</a>
+          {% if target %}
+            <span class="glyphicon glyphicon-arrow-right"></span>
+            <a href="{{ target }}" class="alert-link">{{ target }}</a>
+          {% endif %}
+        </p>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    <div class="col-md-2"></div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-2"></div>
+    <div class="col-md-8">
+      <form method="post" action="/">
+        <div class="form-group">
+          <label for="target">Target URI (Leave this empty and fill out the below to DELETE an ARK)</label>
+          <input type="url" class="form-control" id="target" name="target" placeholder="Target URI">
+        </div>
+        <div class="form-group">
+          <label for="update">ARK to Update (Leave this empty for new ARKs)</label>
+          <input type="url" class="form-control" id="update" name="update" placeholder="ARK to Update">
+        </div>
+        <button type="submit" class="btn btn-default">Submit</button>
+      </form>
+    </div>
+    <div class="col-md-2"></div>
+  </div>
+
+</div>
+{% endblock %}
+

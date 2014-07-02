@@ -1,0 +1,5 @@
+Arkify_Web.egg-info/
+build/
+dist/
+etc/arkform.conf
+*.pyc
