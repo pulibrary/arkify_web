@@ -8,10 +8,8 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from os import path
-from requests import delete
 from requests import get
 from requests import post
-from requests import put
 from requests.auth import HTTPBasicAuth
 from urllib import urlencode
 
