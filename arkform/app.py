@@ -98,7 +98,7 @@ def _do_form(request):
             message = 'Successfully updated ARK.'
         else:
             # WTF?
-            if request.method == 'POST':
+            if request.method == 'POST' and not 'ticket' in request.form:
                 alert_type = 'warning'
                 raise Exception('No data supplied')
     except Exception as e:
