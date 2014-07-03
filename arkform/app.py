@@ -43,8 +43,10 @@ def cas_validate(request, cas_url):
     else:
         return None
 
-def modify(config, ark, target_url):
-    body = '_target:%s' % (target_url,)
+def modify(config, ark, target_url=None):
+    body = '_target:%s\nwho:%s' % (target_url,config["who"])
+    if target_url in ('', None):
+        body += '\n_status:unavailable | withdrawn'
     url = '%s/id/%s' % (config['service'], ark)
     auth = HTTPBasicAuth(config['user'], config['password'])
     headers = { 'content-type' : 'text/plain' }
@@ -55,7 +57,7 @@ def modify(config, ark, target_url):
         raise Exception(resp.content)
 
 def mint_and_bind(config, target_url):
-    body = '_target:%s' % (target_url,)
+    body = '_target:%s\nerc:who:%s' % (target_url,config["who"])
     url = '%s/shoulder/%s' % (config['service'], config['shoulder'])
     auth = HTTPBasicAuth(config['user'], config['password'])
     headers = { 'content-type' : 'text/plain' }
@@ -70,7 +72,7 @@ def mint_and_bind(config, target_url):
 app = Flask(__name__)
 config = configure()
 
-def do_form(request):
+def _do_form(request):
     target = request.form.get('target')
     have_target = target not in ('', None)
     update = request.form.get('update')
@@ -83,7 +85,7 @@ def do_form(request):
     try:
         if have_update and not have_target:
             #DELETE - We can't actually delete, but we can bind to ''.
-            ark_uri = modify(config['ezid'], update, '')
+            ark_uri = modify(config['ezid'], update)
             message = 'ARK now points nowhere.'
         elif have_target and not have_update:
             # MINT and BIND
@@ -109,7 +111,7 @@ def do_form(request):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if app.debug:
-        return do_form(request)
+        return _do_form(request)
     else:
         # pass through CAS
         netid = None
@@ -122,7 +124,7 @@ def index():
             return redirect(login_location, code=307)
         else:
             if netid in config['users']:
-                return do_form(request)
+                return _do_form(request)
             else:
                 return abort(403)
 

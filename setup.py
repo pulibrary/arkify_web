@@ -8,7 +8,7 @@ from shutil import copy
 from sys import stdout
 
 NAME='Arkify Web'
-VERSION='0.0.1'
+VERSION='0.0.2dev'
 DESCRIPTION='Simple web form for for making ARKS @ PUL.'
 AUTHOR='Jon Stroop'
 AUTHOR_EMAIL='jpstroop@gmail.com'
