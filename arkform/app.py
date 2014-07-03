@@ -87,6 +87,7 @@ def _do_form(request):
             #DELETE - We can't actually delete, but we can bind to ''.
             ark_uri = modify(config['ezid'], update)
             message = 'ARK now points nowhere.'
+            alert_type = 'warning'
         elif have_target and not have_update:
             # MINT and BIND
             ark_uri = mint_and_bind(config['ezid'], target)
