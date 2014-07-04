@@ -144,15 +144,19 @@ def index():
                 session['arkform'] = netid
                 return form(request)
             else:
-                return abort(403)
+                return redirect(url_for('not_authorized'), code=302)
 
 @app.route('/withdrawn', methods=['GET'])
 def tombstone():
-    print request.base_url
     resp = make_response(render_template('tombstone.html', title='Not Found'))
     resp.status_code = 404
     return resp
 
+@app.route('/notauth', methods=['GET'])
+def not_authorized():
+    resp = make_response(render_template('not_authorized.html', title='Not Authorized'))
+    resp.status_code = 403
+    return resp
 
 if __name__ == '__main__':
     app.run(debug=True)
