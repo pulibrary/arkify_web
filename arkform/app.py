@@ -2,8 +2,10 @@
 
 from cStringIO import StringIO
 from configobj import ConfigObj
+from datetime import timedelta
 from flask import Flask
 from flask import abort
+from flask import make_response
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -13,7 +15,6 @@ from requests import get
 from requests import post
 from requests.auth import HTTPBasicAuth
 from urllib import urlencode
-from datetime import timedelta
 
 ## Web Application Helpers ##
 def configure():
@@ -46,9 +47,16 @@ def cas_validate(request, cas_url):
         return None
 
 def modify(config, ark, target_url=None):
-    body = '_target:%s\nwho:%s' % (target_url,config["who"])
+    body = 'who:%s' % (config["who"],)
     if target_url in ('', None):
         body += '\n_status:unavailable | withdrawn'
+        base = request.base_url
+        if base[-1:] != '/':
+            base = base + '/'
+        body += '\n_target:%swithdrawn' % (base)
+    else:
+        body += '\ntarget:%s' % (target_url,)
+
     url = '%s/id/%s' % (config['service'], ark)
     auth = HTTPBasicAuth(config['user'], config['password'])
     headers = { 'content-type' : 'text/plain' }
@@ -91,7 +99,10 @@ def form(request):
         if have_update and not have_target:
             #DELETE - We can't actually delete, but we can bind to ''.
             ark_uri = modify(config['ezid'], update)
-            message = 'ARK now points nowhere.'
+            base = request.base_url
+            if base[-1:] != '/':
+                base = base + '/'
+            message = 'ARK now points to %swithdrawn.' % (base)
             alert_type = 'warning'
         elif have_target and not have_update:
             # MINT and BIND
@@ -134,6 +145,14 @@ def index():
                 return form(request)
             else:
                 return abort(403)
+
+@app.route('/withdrawn', methods=['GET'])
+def tombstone():
+    print request.base_url
+    resp = make_response(render_template('tombstone.html', title='Not Found'))
+    resp.status_code = 404
+    return resp
+
 
 if __name__ == '__main__':
     app.run(debug=True)

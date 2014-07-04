@@ -1,11 +1,11 @@
-# See http://configobj.readthedocs.org/en/latest/configobj.html#the-config-file-format
+# The values are interpreted as Python, so quote strings, etc.
 
 app_name = 'PUL ARK Form'
-users = 'jstroop', 'mratliff'
+users = ['jstroop', 'mratliff']
 
 [cas]
 url = 'xxxx/cas'
-session_age = 43200
+session_age = 43200 # in seconds
 secret = 'b73524df1ae3887d9206ff23ede98fe78aa275aca2a4e4d80687c19ab71942dfe8881b28e40875e92a921f0d45c2866d5dc01a13e8233c55a4a7deac1d33e084'
 
 [ezid]
