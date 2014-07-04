@@ -6,6 +6,7 @@
     {% include 'head.html' %}
     <body>
       <div class="container">
+      <img src="{{ url_for('static', filename='images/pul-logo.png') }}" />
       {% block content %}{% endblock %}
       </div>
     {% include 'js.html' %}
