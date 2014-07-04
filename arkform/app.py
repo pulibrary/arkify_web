@@ -7,11 +7,13 @@ from flask import abort
 from flask import redirect
 from flask import render_template
 from flask import request
+from flask import session
 from os import path
 from requests import get
 from requests import post
 from requests.auth import HTTPBasicAuth
 from urllib import urlencode
+from datetime import timedelta
 
 ## Web Application Helpers ##
 def configure():
@@ -19,7 +21,7 @@ def configure():
     if __name__ == '__main__':
         config_fp = path.join(project_dir(), 'etc/arkform.conf')
 
-    config = ConfigObj(config_fp)
+    config = ConfigObj(config_fp, unrepr=True)
 
     # Remove trailing '/'s if they're there.
     if config['cas']['url'][-1:] == '/':
@@ -71,8 +73,11 @@ def mint_and_bind(config, target_url):
 ### Web Application ###
 app = Flask(__name__)
 config = configure()
+app.secret_key = config['cas']['secret']
+session_lifetime = timedelta(seconds=config['cas']['session_age'])
+app.permanent_session_lifetime = session_lifetime
 
-def _do_form(request):
+def form(request):
     target = request.form.get('target')
     have_target = target not in ('', None)
     update = request.form.get('update')
@@ -111,10 +116,9 @@ def _do_form(request):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    if app.debug:
-        return _do_form(request)
+    if 'arkform' in session or app.debug:
+        return form(request)
     else:
-        # pass through CAS
         netid = None
         cas_url = config['cas']['url']
         if 'ticket' in request.form:
@@ -125,7 +129,9 @@ def index():
             return redirect(login_location, code=307)
         else:
             if netid in config['users']:
-                return _do_form(request)
+                session.premanent = True
+                session['arkform'] = netid
+                return form(request)
             else:
                 return abort(403)
 
