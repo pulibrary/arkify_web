@@ -1,4 +1,11 @@
+.who {
+  padding-bottom: .3em; 
+  text-align: right; 
+  border-bottom: 1px solid #aaa;
+}
+
 .container {
   margin-top: 20px;
   max-width: 800px;
 };
+

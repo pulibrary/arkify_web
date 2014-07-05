@@ -6,7 +6,16 @@
     {% include 'head.html' %}
     <body>
       <div class="container">
-      <img src="{{ url_for('static', filename='images/pul-logo.png') }}" />
+        {% if netid %}
+        <p class="who">logged in as {{ netid }} | 
+          <span class="glyphicon glyphicon-log-out"></span> <a href="{{ url_for('logout') }}">logout</a>
+        </p>
+        {% endif %}
+        <header>
+          <img alt="Princeton University Library" src="{{ url_for('static', filename='images/pul-logo.png') }}" />
+          <h1>{{ title }}</h1>
+        </header>
+
       {% block content %}{% endblock %}
       </div>
     {% include 'js.html' %}

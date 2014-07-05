@@ -16,6 +16,8 @@ from requests import post
 from requests.auth import HTTPBasicAuth
 from urllib import urlencode
 
+SESSION_KEY = 'arkform'
+
 ## Web Application Helpers ##
 def configure():
     config_fp = '/etc/arkform.conf'
@@ -36,6 +38,12 @@ def configure():
 def project_dir():
     return path.dirname(path.dirname(path.realpath(__file__)))
 
+def normalize_base_url(url):
+    if url[-1:] != '/':
+        url = url + '/'
+    return url
+
+
 def cas_validate(request, cas_url):
     params = { 'service' : request.base_url,'ticket' : request.form['ticket'] }
     validate_url = "%s/validate" % (cas_url,)
@@ -50,9 +58,7 @@ def modify(config, ark, target_url=None):
     body = 'who:%s' % (config["who"],)
     if target_url in ('', None):
         body += '\n_status:unavailable | withdrawn'
-        base = request.base_url
-        if base[-1:] != '/':
-            base = base + '/'
+        base = normalize_base_url(request.base_url)
         body += '\n_target:%swithdrawn' % (base)
     else:
         body += '\ntarget:%s' % (target_url,)
@@ -85,7 +91,7 @@ app.secret_key = config['cas']['secret']
 session_lifetime = timedelta(seconds=config['cas']['session_age'])
 app.permanent_session_lifetime = session_lifetime
 
-def form(request):
+def form(request, netid):
     target = request.form.get('target')
     have_target = target not in ('', None)
     update = request.form.get('update')
@@ -99,9 +105,7 @@ def form(request):
         if have_update and not have_target:
             #DELETE - We can't actually delete, but we can bind to ''.
             ark_uri = modify(config['ezid'], update)
-            base = request.base_url
-            if base[-1:] != '/':
-                base = base + '/'
+            base = normalize_base_url(request.base_url)
             message = 'ARK now points to %swithdrawn.' % (base)
             alert_type = 'warning'
         elif have_target and not have_update:
@@ -123,28 +127,31 @@ def form(request):
     finally:
         return render_template('form.html', title=config['app_name'], ark=ark_uri, 
             message=message, target=target, alert_type=alert_type, 
-            here=request.base_url)
+            here=request.base_url, netid=netid)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    if 'arkform' in session or app.debug:
-        return form(request)
+    netid = None
+    # if SESSION_KEY in session or app.debug:
+    #     netid = 'debug'
+    #     return form(request, netid)
+    # else:
+    cas_url = config['cas']['url']
+    if 'ticket' in request.form:
+        netid = cas_validate(request, cas_url)
+    if netid is None:
+        params = { 'service' : request.base_url, 'method' : 'POST' }
+        login_location = "%s/login?%s" % (cas_url, urlencode(params))
+        return redirect(login_location, code=307)
     else:
-        netid = None
-        cas_url = config['cas']['url']
-        if 'ticket' in request.form:
-            netid = cas_validate(request, cas_url)
-        if netid is None:
-            params = { 'service' : request.base_url, 'method' : 'POST' }
-            login_location = "%s/login?%s" % (cas_url, urlencode(params))
-            return redirect(login_location, code=307)
+        if netid in config['users']:
+            session.permanent = True
+            session[SESSION_KEY] = netid
+            return form(request, netid)
         else:
-            if netid in config['users']:
-                session.premanent = True
-                session['arkform'] = netid
-                return form(request)
-            else:
-                return redirect(url_for('not_authorized'), code=302)
+            base = normalize_base_url(request.base_url)
+            location = '%snot_authorized' % (base,)
+            return redirect(location, code=302)
 
 @app.route('/withdrawn', methods=['GET'])
 def tombstone():
@@ -157,6 +164,18 @@ def not_authorized():
     resp = make_response(render_template('not_authorized.html', title='Not Authorized'))
     resp.status_code = 403
     return resp
+
+@app.route('/logout', methods=['GET'])
+def logout():
+    if SESSION_KEY in session:
+        del session[SESSION_KEY]
+        cas_url = config['cas']['url']
+        params = { 'service' : request.base_url }
+        location = "%s/logout?%s" % (cas_url, urlencode(params))
+        return redirect(location, code=307)
+    else:
+        return render_template('logged_out.html', title='Logged Out')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
