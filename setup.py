@@ -8,12 +8,12 @@ from shutil import copy
 from sys import stdout
 
 NAME='Arkify Web'
-VERSION='0.0.2dev'
-DESCRIPTION='Simple web form for for making ARKS @ PUL.'
+VERSION='0.0.2'
+DESCRIPTION='Simple web form for for making and managing ARKS @ PUL.'
 AUTHOR='Jon Stroop'
 AUTHOR_EMAIL='jpstroop@gmail.com'
 URI=''
-INSTALL_REQUIRES=['configobj', 'flask', 'requests']
+INSTALL_REQUIRES=[ 'configobj', 'flask', 'requests', 'sqlite3' ]
 DATA_FILES=[
   ('/etc', ['etc/arkform.conf']),
   ('/var/www', ['www/arkform.wsgi'])
