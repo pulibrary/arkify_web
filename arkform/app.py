@@ -109,14 +109,15 @@ def close_connection(exception):
         db.close()
 
 def db_put(ark, target):
-    row = db_get(target)
-    q = ''
-    if row:
-        q = "UPDATE arks SET target=? WHERE ark=?"
-    else:
-        q = "INSERT INTO arks (target, ark) VALUES (?,?)" # BROKEN
     con = get_db()
     cur = con.cursor()
+    cur.execute("SELECT * FROM arks WHERE ark=?", (ark,))
+    row = cur.fetchone()
+    q = ''
+    if row is None:
+        q = "INSERT INTO arks (target, ark) VALUES (?,?)"
+    else:
+        q = "UPDATE arks SET target=? WHERE ark=?"
     cur.execute(q, (target, ark))
     con.commit()
 
