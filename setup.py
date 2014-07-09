@@ -13,7 +13,7 @@ DESCRIPTION='Simple web form for for making and managing ARKS @ PUL.'
 AUTHOR='Jon Stroop'
 AUTHOR_EMAIL='jpstroop@gmail.com'
 URI=''
-INSTALL_REQUIRES=[ 'configobj', 'flask', 'requests', 'sqlite3' ]
+INSTALL_REQUIRES=[ 'configobj', 'flask', 'requests', ]
 DATA_FILES=[
   ('/etc', ['etc/arkform.conf']),
   ('/var/www', ['www/arkform.wsgi'])
@@ -31,7 +31,9 @@ setup(name=NAME,
   url=URI, 
   install_requires=INSTALL_REQUIRES,
   packages=PACKAGES,
-  data_files=DATA_FILES
+  data_files=DATA_FILES,
+  include_package_data=True,
+  zip_safe=False
 )
 
 stdout.write('*'*79+'\n')
