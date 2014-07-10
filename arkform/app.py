@@ -63,9 +63,10 @@ def init_db(file_path):
             cur.execute('''CREATE TABLE IF NOT EXISTS 
                 arks(
                   target TEXT NOT NULL,
-                  ark TEXT NOT NULL,
-                  UNIQUE (target, ark)
+                  ark TEXT NOT NULL
                 );''')
+            cur.execute('CREATE INDEX target_idx ON arks(target);')
+            cur.execute('CREATE INDEX ark_idx ON arks(ark);')
             con.commit()
         except sqlite.Error, e:
             if con:
@@ -142,7 +143,7 @@ def cas_validate(request, cas_url):
     else:
         return None
 
-def modify(config, ark, target_url=None):
+def modify(config, ark, base_url, target_url=None):
     '''Modify an existing ARK. If the target_url parameter is not included,
     the ARK is marked as [withdrawn][1], and the target is set to this 
     application's `/withdrawn` page.
@@ -151,8 +152,9 @@ def modify(config, ark, target_url=None):
     '''
 
     row = db_get(target_url)
-    if row is not None:
+    if row is not None and row[0] != '%swithdrawn' % (base_url,):
         raise Exception('%s is already bound to %s' % (to_href(row[0]),to_href(row[1])))
+    
     body = 'who:%s' % (config["who"],)
 
     if target_url in ('', None):
@@ -217,6 +219,7 @@ def form(request, netid):
     ark_uri = None
     message = None
     alert_type = 'success' # see http://getbootstrap.com/components/#alerts
+    base = normalize_base_url(request.base_url)
     try:
         if have_lookup:
             # LOOKUP
@@ -227,8 +230,7 @@ def form(request, netid):
                 message = '%s is not bound to an ARK in this system.' % (to_href(lookup),)
         elif have_update and not have_target:
             # WITHDRAW
-            ark_uri = modify(config['ezid'], update)
-            base = normalize_base_url(request.base_url)
+            ark_uri = modify(config['ezid'], update, base)
             withdrawn_uri = '%swithdrawn' % (base)
             message = 'ARK now points to %s.' % (to_href(withdrawn_uri),)
             alert_type = 'warning'
@@ -239,7 +241,7 @@ def form(request, netid):
             message += update_message(target, ark_uri)
         elif have_target and have_update:
             # MODIFY
-            ark_uri = modify(config['ezid'], update, target)
+            ark_uri = modify(config['ezid'], update, base, target)
             message = 'Successfully updated ARK.'
             message += update_message(target, ark_uri)
         else:
