@@ -31,7 +31,7 @@ def project_dir():
     return path.dirname(path.dirname(path.realpath(__file__)))
 
 def normalize_base_url(url):
-    if url[-1:] != '/':
+    if url[-1] != '/':
         url = url + '/'
     return url
 
